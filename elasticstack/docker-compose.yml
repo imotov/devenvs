@@ -1,0 +1,45 @@
+version: '3.7'
+
+services:
+  elasticsearch:
+    build:
+      context: .
+      dockerfile: Dockerfile-elasticsearch
+      args:
+        version: ${VERSION:-latest}
+    container_name: elasticsearch
+    ports:
+      - "127.0.0.1:9200:9200"
+    environment:
+      - network.host=0.0.0.0
+      - discovery.type=single-node
+      - "path.repo=/mnt/esbackup"
+      - "ES_JAVA_OPTS=-Xmx1G -Xms1G"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+      - /Volumes/esbackup:/mnt/esbackup
+    networks:
+      - elastic
+
+  kibana:
+    image: "docker.elastic.co/kibana/kibana:${VERSION:-latest}"
+    container_name: kibana
+    ports:
+      - "127.0.0.1:5601:5601"
+    networks:
+      - elastic
+    depends_on:
+      - elasticsearch
+    environment:
+      SERVER_NAME: kibana
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      SERVER_HOST: "0.0.0.0"
+      LOGGING_QUIET: "true"
+
+networks:
+  elastic:
+    driver: bridge
+
+volumes:
+  esdata:
+    driver: local
