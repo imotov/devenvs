@@ -5,14 +5,15 @@ services:
     image: prom/prometheus:${PROMETHEUS_VERSION:-latest}
     container_name: prometheus
     ports:
-      - "127.0.0.1:9090:9090"
+      - "${MAPHOST}9090:9090"
     volumes:
       - ./alert.yml:/etc/prometheus/alert.yml
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
-    command: --web.enable-lifecycle  --config.file=/etc/prometheus/prometheus.yml
+    command: --web.enable-lifecycle --config.file=/etc/prometheus/prometheus.yml
     depends_on:
       - node_exporter
+    restart: unless-stopped
     networks:
       - elastic
 
@@ -31,6 +32,8 @@ services:
   grafana:
     image: grafana/grafana:${GRAFANA_VERSION:-latest}
     container_name: grafana
+    ports:
+      - "${MAPHOST}3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
     environment:
@@ -38,8 +41,6 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=${GF_ADMIN_PASSWORD:-admin}
       - GF_USERS_ALLOW_SIGN_UP=false
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:3000:3000"
     networks:
       - elastic
 
@@ -51,19 +52,26 @@ services:
         version: ${ES_VERSION:-7.12.1}
     container_name: elasticsearch
     ports:
-      - "127.0.0.1:9200:9200"
+      - "${MAPHOST}9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+      - /tmp/esbackup:/mnt/esbackup
+      - certs:/usr/share/elasticsearch/config/certificates
     environment:
       - network.host=0.0.0.0
       - discovery.type=single-node
       - "path.repo=/mnt/esbackup"
-      - "ES_JAVA_OPTS=-Xmx1G -Xms1G"
+      - "ES_JAVA_OPTS=-Xmx${ES_MEMORY:-512m} -Xms${ES_MEMORY:-512m}"
       - xpack.license.self_generated.type=trial
       - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=/usr/share/elasticsearch/config/certificates/elasticsearch/elasticsearch.key
+      - xpack.security.http.ssl.certificate_authorities=/usr/share/elasticsearch/config/certificates/ca/ca.crt
+      - xpack.security.http.ssl.certificate=/usr/share/elasticsearch/config/certificates/elasticsearch/elasticsearch.crt
       - xpack.security.authc.api_key.enabled=true
+      - xpack.security.audit.enabled=true
       - ELASTIC_PASSWORD=${ES_ADMIN_PASSWORD:-changeme}
-    volumes:
-      - esdata:/usr/share/elasticsearch/data
-      - /Volumes/esbackup:/mnt/esbackup
+    restart: unless-stopped
     networks:
       - elastic
 
@@ -71,18 +79,21 @@ services:
     image: "docker.elastic.co/kibana/kibana:${ES_VERSION:-7.12.1}"
     container_name: kibana
     ports:
-      - "127.0.0.1:5601:5601"
-    depends_on:
-      - elasticsearch
+      - "${MAPHOST}:5601:5601"
+    volumes:
+      - ./kibana.yml:/usr/share/kibana/config/kibana.yml
+      - certs:/usr/share/kibana/config/certificates
     environment:
       SERVER_NAME: kibana
-      ELASTICSEARCH_HOSTS: "http://elasticsearch:9200"
+      ELASTICSEARCH_HOSTS: "https://elasticsearch:9200"
       SERVER_HOST: "0.0.0.0"
       LOGGING_QUIET: "true"
       ELASTICSEARCH_USERNAME: elastic
       ELASTICSEARCH_PASSWORD: ${ES_ADMIN_PASSWORD:-changeme}
-    volumes:
-      - ./kibana.yml:/usr/share/kibana/config/kibana.yml
+      ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES: /usr/share/kibana/config/certificates/ca/ca.crt
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
     networks:
       - elastic
 
@@ -92,10 +103,12 @@ services:
     container_name: agent
     volumes:
       - ./elastic-agent.yml:/usr/share/elastic-agent/elastic-agent.yml
+      - certs:/usr/share/elastic-agent/certificates
     command: ["-e", "-v"]
     environment:
       ELASTICSEARCH_USERNAME: elastic
       ELASTICSEARCH_PASSWORD: ${ES_ADMIN_PASSWORD:-changeme}
+    restart: unless-stopped
     networks:
       - elastic
 
@@ -103,6 +116,7 @@ volumes:
   prometheus-data: {}
   grafana_data: {}
   esdata: {}
+  certs: {}
 
 networks:
   elastic:

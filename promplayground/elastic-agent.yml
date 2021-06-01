@@ -1,7 +1,8 @@
 outputs:
   default:
     type: elasticsearch
-    hosts: '${ELASTICSEARCH_HOSTS:http://elasticsearch:9200}'
+    hosts: '${ELASTICSEARCH_HOSTS:https://elasticsearch:9200}'
+    ssl.certificate_authorities: ["/usr/share/elastic-agent/certificates/ca/ca.crt"]
     username: '${ELASTICSEARCH_USERNAME:elastic}'
     password: '${ELASTICSEARCH_PASSWORD:changeme}'
 
