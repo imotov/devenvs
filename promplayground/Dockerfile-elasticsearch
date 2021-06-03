@@ -2,4 +2,4 @@ ARG version
 
 FROM "docker.elastic.co/elasticsearch/elasticsearch:$version"
 RUN elasticsearch-plugin install analysis-kuromoji
-RUN elasticsearch-plugin install repository-gcs
+RUN elasticsearch-plugin install --batch repository-gcs
