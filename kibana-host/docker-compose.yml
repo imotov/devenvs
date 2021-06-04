@@ -1,0 +1,21 @@
+version: '3.7'
+
+
+services:
+  kibana:
+    image: "docker.elastic.co/kibana/kibana:${ES_VERSION:-8.0.0-SNAPSHOT}"
+    container_name: kibana-host
+    ports:
+      - "127.0.0.1:5601:5601"
+    volumes:
+      - ./kibana.yml:/usr/share/kibana/config/kibana.yml
+    environment:
+      SERVER_NAME: kibana
+      ELASTICSEARCH_HOSTS: "http://host.docker.internal:9200"
+      SERVER_HOST: "0.0.0.0"
+      ELASTICSEARCH_USERNAME: elastic
+      ELASTICSEARCH_PASSWORD: ${ES_ADMIN_PASSWORD:-changeme}
+    depends_on:
+      - elasticsearch
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
