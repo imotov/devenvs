@@ -87,3 +87,17 @@ To start an environment cd into the directory and run
 ```
 $ docker-compose up
 ```
+
+## ubuntu
+
+My ubuntu test environment
+
+To setup create `home` directory and .env file
+```
+UBUNTU_VERSION=latest
+```
+
+To run:
+```
+docker-compose run --rm ubuntu  
+```

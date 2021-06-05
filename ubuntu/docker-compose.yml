@@ -1,0 +1,14 @@
+version: '3.7'
+services:
+  ubuntu:
+    build:
+      context: .
+      dockerfile: Dockerfile-ubuntu
+      args:
+        version: ${UBUNTU_VERSION:-latest}
+    container_name: prometheus
+    stdin_open: true
+    tty: true
+    command: ["/usr/bin/zsh"]
+    volumes:
+      - ./home:/root
