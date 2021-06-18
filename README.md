@@ -97,6 +97,11 @@ To setup create `home` directory and .env file
 UBUNTU_VERSION=latest
 ```
 
+To update everything:
+```
+docker-compose build --no-cache
+```
+
 To run:
 ```
 docker-compose run --rm ubuntu  

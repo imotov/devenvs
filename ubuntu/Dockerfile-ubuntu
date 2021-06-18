@@ -1,22 +1,22 @@
 ARG version
 FROM --platform=linux/amd64 ubuntu:$version
 
-#ENV TERM linux
-#ENV DEBIAN_FRONTEND noninteractive
+ENV TERM linux
+ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update
 RUN apt-get -y dist-upgrade
+
 RUN apt-get install -y\
-  git\
-  zsh\
   curl\
-  apt-transport-https\
-  ca-certificates\
+  git\
+  libimage-exiftool-perl\
   locales\
   tree\
-  tmux
-
-RUN chsh -s /usr/bin/zsh
+  tmux\
+  unzip\
+  zip\
+  zsh
 
 RUN rm -rf /var/lib/apt/lists/*  && \
   localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8

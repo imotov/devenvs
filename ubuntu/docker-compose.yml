@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile-ubuntu
       args:
         version: ${UBUNTU_VERSION:-latest}
-    container_name: prometheus
+    container_name: ubuntu
     stdin_open: true
     tty: true
     command: ["/usr/bin/zsh"]
