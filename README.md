@@ -78,17 +78,33 @@ $ docker-compose up -d
 
 Runs the snapshot build of kibana against localhost elasticsearch
 
-Create .env file with the following content:
+Create .env file with the following content for released 7.x versions of
+elasticsearch.
 
 ```
 ES_VERSION=7.12.1
 ES_ADMIN_PASSWORD=changeme
 ```
 
+Create .env file with the following content if you want to run kibana against
+an instant started with `./gradlew run`
+
+```
+ES_VERSION=8.0.0-SNAPSHOT
+ES_ADMIN_USER=elastic-admin
+ES_ADMIN_PASSWORD=elastic-password
+```
+
 To start an environment cd into the directory and run
 
 ```
 $ docker-compose up
+```
+
+To re-pull a snapshot image use
+
+```
+$ docker-compose pull
 ```
 
 ## ubuntu
