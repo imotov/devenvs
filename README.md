@@ -24,7 +24,9 @@ Starts the latest version of Elasticsearch and Kibana but you can specify versio
 in `.env` file. For example:
 
 ```
-VERSION=7.12.1
+VERSION=8.6.0
+ELASTIC_PASSWORD=changeme
+KIBANA_PASSWORD=changeme
 ```
 
 After startup you can connect to Elasticsearch at http://localhost:9200/ and

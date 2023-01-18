@@ -13,13 +13,39 @@ services:
     environment:
       - network.host=0.0.0.0
       - discovery.type=single-node
+      - xpack.security.http.ssl.enabled=false
       - "path.repo=/mnt/esbackup"
       - "ES_JAVA_OPTS=-Xmx1G -Xms1G"
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
     volumes:
       - esdata:/usr/share/elasticsearch/data
       - /tmp/esbackup:/mnt/esbackup
     networks:
       - elastic
+
+  setup:
+    image: "docker.elastic.co/elasticsearch/elasticsearch:${VERSION:-latest}"
+    container_name: setup
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    user: "0"
+    networks:
+      - elastic
+    depends_on:
+      - elasticsearch
+    command: >
+      bash -c '
+        if [ x${ELASTIC_PASSWORD} == x ]; then
+          echo "Set the ELASTIC_PASSWORD environment variable in the .env file";
+          exit 1;
+        elif [ x${KIBANA_PASSWORD} == x ]; then
+          echo "Set the KIBANA_PASSWORD environment variable in the .env file";
+          exit 1;
+        fi;
+        echo "Setting kibana_system password";
+        until curl -s -X POST -u "elastic:${ELASTIC_PASSWORD}" -H "Content-Type: application/json" http://elasticsearch:9200/_security/user/kibana_system/_password -d "{\"password\":\"${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done;
+        echo "All done!";
+      '
 
   kibana:
     image: "docker.elastic.co/kibana/kibana:${VERSION:-latest}"
@@ -30,11 +56,14 @@ services:
       - elastic
     depends_on:
       - elasticsearch
+      - setup
     environment:
-      SERVER_NAME: kibana
-      ELASTICSEARCH_URL: http://elasticsearch:9200
-      SERVER_HOST: "0.0.0.0"
-      LOGGING_QUIET: "true"
+      - SERVER_NAME=kibana
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - SERVER_HOST="0.0.0.0"
+      - LOGGING_QUIET=true
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
 
 networks:
   elastic:
