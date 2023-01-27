@@ -27,6 +27,8 @@ in `.env` file. For example:
 VERSION=8.6.0
 ELASTIC_PASSWORD=changeme
 KIBANA_PASSWORD=changeme
+ES_MAP_HOST=127.0.0.1:
+KIBANA_MAP_HOST=127.0.0.1:
 ```
 
 After startup you can connect to Elasticsearch at http://localhost:9200/ and
