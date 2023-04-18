@@ -1,0 +1,4 @@
+version: 0.5
+
+peer_seeds: [qw1, qw2]
+metastore_uri: s3://quickwit/quickwit-indexes

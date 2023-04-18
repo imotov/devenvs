@@ -157,3 +157,20 @@ docker-compose exec clickhouse_server clickhouse-client
 ```
 
 Or open http://localhost:8123 in your browser.
+
+## quickwit
+
+The following environment variables are supported in .env file:
+
+```
+MAPHOST=127.0.0.1:
+QW_VERSION=latest
+```
+
+To run:
+
+```
+docker-compose up -d
+```
+
+Open http://localhost:7280 in your browser.

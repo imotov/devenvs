@@ -1,0 +1,74 @@
+version: "3.9"
+
+networks:
+  default:
+    name: quickwit-network
+    ipam:
+      config:
+      - subnet: 172.16.7.0/24
+        gateway: 172.16.7.1
+
+services:
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack
+    ports:
+      - "${MAPHOST:-127.0.0.1}:4566:4566"            # LocalStack Gateway
+      - "${MAPHOST:-127.0.0.1}:4510-4559:4510-4559"  # external services port range
+    environment:
+      SERVICES: s3
+    volumes:
+      - "./data/localstack:/var/lib/localstack"
+      - "./localstack-init:/etc/localstack/init/ready.d"
+    healthcheck:
+      test: ["CMD", "curl", "-k", "-f", "https://localhost:4566/quickwit"]
+      interval: 1s
+      timeout: 5s
+      retries: 100
+
+  qw1:
+    image: quickwit/quickwit:${QW_VERSION:-latest}
+    container_name: qw1
+    ports:
+      - "${MAPHOST:-127.0.0.1}:7280-7282:7280-7282"
+    environment:
+      QW_S3_ENDPOINT: http://localstack:4566
+      QW_NODE_ID: qw1
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: ignored
+      AWS_SECRET_ACCESS_KEY: ignored
+    volumes:
+      - "./config.yaml:/quickwit/config/quickwit.yaml"
+      - "./data/qwdata:/quickwit/qwdata"
+    command: ["run", "--service", "indexer", "--service", "metastore"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7280/api/v1/version"]
+      interval: 1s
+      timeout: 5s
+      retries: 100
+    depends_on:
+      localstack:
+        condition: service_healthy
+
+  qw2:
+    image: quickwit/quickwit:${QW_VERSION:-latest}
+    container_name: qw2
+    ports:
+      - "${MAPHOST:-127.0.0.1}:7290-7292:7280-7282"
+    environment:
+      QW_S3_ENDPOINT: http://localstack:4566
+      QW_NODE_ID: qw2
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: ignored
+      AWS_SECRET_ACCESS_KEY: ignored
+    volumes:
+      - "./config.yaml:/quickwit/config/quickwit.yaml"
+    command: ["run", "--service", "control_plane", "--service", "searcher"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7290/api/v1/version"]
+      interval: 1s
+      timeout: 5s
+      retries: 100
+    depends_on:
+      localstack:
+        condition: service_healthy

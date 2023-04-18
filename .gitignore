@@ -2,3 +2,4 @@
 .DS_Store
 ubuntu/home
 clickhouse/data
+quickwit/data
