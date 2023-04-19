@@ -160,6 +160,8 @@ Or open http://localhost:8123 in your browser.
 
 ## quickwit
 
+This script starts 2 nodes of quickwit and localstack's S3 service. The first node serves the roles of metastore and indexer. The second node serves the roles of control plane and searcher. Both data and metadata are stored in localstack.
+
 The following environment variables are supported in .env file:
 
 ```
