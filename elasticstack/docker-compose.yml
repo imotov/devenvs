@@ -13,6 +13,7 @@ services:
     environment:
       - network.host=0.0.0.0
       - discovery.type=single-node
+      - xpack.security.enabled=true
       - xpack.security.http.ssl.enabled=false
       - "path.repo=/mnt/esbackup"
       - "ES_JAVA_OPTS=-Xmx1G -Xms1G"
@@ -22,13 +23,16 @@ services:
       - /tmp/esbackup:/mnt/esbackup
     networks:
       - elastic
+    healthcheck:
+     test:
+       [
+         "CMD-SHELL",
+         "curl -s http://localhost:9200 | grep -q 'missing authentication credentials'",
+       ]
 
   setup:
     image: "docker.elastic.co/elasticsearch/elasticsearch:${VERSION:-latest}"
     container_name: setup
-    volumes:
-      - esdata:/usr/share/elasticsearch/data
-    user: "0"
     networks:
       - elastic
     depends_on:
@@ -42,6 +46,7 @@ services:
           echo "Set the KIBANA_PASSWORD environment variable in the .env file";
           exit 1;
         fi;
+        sleep 30
         echo "Setting kibana_system password";
         until curl -s -X POST -u "elastic:${ELASTIC_PASSWORD}" -H "Content-Type: application/json" http://elasticsearch:9200/_security/user/kibana_system/_password -d "{\"password\":\"${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done;
         echo "All done!";
@@ -58,16 +63,25 @@ services:
       - elasticsearch
       - setup
     environment:
-      - SERVER_NAME=kibana
+      - SERVERNAME=kibana
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
       - SERVER_HOST="0.0.0.0"
       - LOGGING_QUIET=true
       - ELASTICSEARCH_USERNAME=kibana_system
       - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s -I http://localhost:5601 | grep -q 'HTTP/1.1 302 Found'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
 
 networks:
   elastic:
-    driver: bridge
+    external: false
 
 volumes:
   esdata:
